@@ -109,6 +109,14 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
 
     @Override
     public void collision(PhysicsCollisionEvent event) {
+        if (event.getNodeA().getName().equals("tuc") || event.getNodeB().getName().equals("tuc")) {
+            if(event.getNodeA().getName().equals("shot")) {
+
+            }
+            else if(event.getNodeB().getName().equals("shot")) {
+                
+            }
+        }
     }
     
     private void initKeys() {
@@ -244,55 +252,87 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         tuc.attachChild(boxGeo);
         
         tuc.setLocalTranslation(bus.getLocalTranslation());
+        
+        RigidBodyControl boxPhysicsNode = new RigidBodyControl(0);
+        tuc.addControl(boxPhysicsNode);
+        bulletAppState.getPhysicsSpace().add(boxPhysicsNode);
+        
         tucs.add(tuc);
         rootNode.attachChild(tuc);
     }
     
     public void updateTuc(float tpf) {
+        
+        double tX, tZ, pX, pZ, auxauxTheta;
+        
+
+        
         for(Node currentTuc : tucs){
-            double theta = Math.atan((currentTuc.getLocalTranslation().x - player.getLocalTranslation().x) / (currentTuc.getLocalTranslation().z - player.getLocalTranslation().z));
-            quat.fromAngleAxis((float)theta, new Vector3f(0, 1, 0));
+            tZ = currentTuc.getLocalTranslation().z;
+            tX = currentTuc.getLocalTranslation().x;
+            pX = player.getLocalTranslation().x;
+            pZ = player.getLocalTranslation().z;
+
+            double theta = Math.atan(Math.abs((tZ - pZ) / (tX - pX)));
+            if(tX < pX) {
+                if(tZ > pZ) {
+                    theta = (1.5078 * 2) - theta;
+                }
+                else {
+                    theta = (1.5078 * 2) + theta;
+                }
+            }
+            else {
+                if(tZ < pZ) {
+                    theta = (1.5078 * 4) - theta;
+                }
+            }
+            quat.fromAngleAxis((float)theta, new Vector3f(0, -1, 0));
             currentTuc.setLocalRotation(quat);
-            if(player.getLocalTranslation().z - currentTuc.getLocalTranslation().z > 0)
-                currentTuc.setLocalTranslation((float)(currentTuc.getLocalTranslation().x + (Math.sin(theta) * tpf)), (float)currentTuc.getLocalTranslation().y, (float)(currentTuc.getLocalTranslation().z + (Math.cos(theta) * tpf)));
-            else
-                currentTuc.setLocalTranslation((float)(currentTuc.getLocalTranslation().x - (Math.sin(theta) * tpf)), (float)currentTuc.getLocalTranslation().y, (float)(currentTuc.getLocalTranslation().z - (Math.cos(theta) * tpf)));
+            currentTuc.setLocalTranslation((float)(currentTuc.getLocalTranslation().x - (Math.cos(theta) * tpf)), (float)currentTuc.getLocalTranslation().y, (float)(currentTuc.getLocalTranslation().z - (Math.sin(theta) * tpf)));
+            currentTuc.getControl(RigidBodyControl.class).setPhysicsLocation(currentTuc.getLocalTranslation());
+            currentTuc.getControl(RigidBodyControl.class).setPhysicsRotation(currentTuc.getLocalRotation());
         }
     }
     
     public void updatePlayer(float tpf) {
-        double theta = Math.atan((inputManager.getCursorPosition().x - cam.getScreenCoordinates(player.getLocalTranslation()).x) / (inputManager.getCursorPosition().y - cam.getScreenCoordinates(player.getLocalTranslation()).y));
-        quat.fromAngleAxis((float)theta, new Vector3f(0, -1, 0));
+        double cX, cY, pX, pY, auxauxTheta;
+        
+        cX = inputManager.getCursorPosition().x;
+        cY = inputManager.getCursorPosition().y;
+        pX = cam.getScreenCoordinates(player.getLocalTranslation()).x;
+        pY = cam.getScreenCoordinates(player.getLocalTranslation()).y;
+        double theta = Math.atan(Math.abs((cY - pY) / (cX - pX)));
+        
+        if(cX < pX) {
+            if(cY > pY) {
+                theta = (1.5078 * 2) - theta;
+            }
+            else {
+                theta = (1.5078 * 2) + theta;
+            }
+        }
+        else {
+            if(cY < pY) {
+                theta = (1.5078 * 4) - theta;
+            }
+        }
+        
+        auxauxTheta = theta * 180 / Math.PI;
+        quat.fromAngleAxis((float)theta, new Vector3f(0, 1, 0));
         player.setLocalRotation(quat);
         player.getControl(RigidBodyControl.class).setPhysicsRotation(player.getLocalRotation());
         player.getControl(RigidBodyControl.class).activate();
         
         if(up) {
-            if(cam.getScreenCoordinates(player.getLocalTranslation()).y - inputManager.getCursorPosition().y < 0) {
-                player.setLocalTranslation((float)(player.getLocalTranslation().x - (Math.sin(theta) * tpf * 2)), (float)player.getLocalTranslation().y, (float)(player.getLocalTranslation().z + (Math.cos(theta) * tpf * 2)));
-            }
-            else {
-                player.setLocalTranslation((float)(player.getLocalTranslation().x + (Math.sin(theta) * tpf * 2)), (float)player.getLocalTranslation().y, (float)(player.getLocalTranslation().z - (Math.cos(theta) * tpf * 2)));
-            }
+            player.setLocalTranslation((float)(player.getLocalTranslation().x - (Math.cos(theta) * tpf * 2)), (float)player.getLocalTranslation().y, (float)(player.getLocalTranslation().z + (Math.sin(theta) * tpf * 2)));
             player.getControl(RigidBodyControl.class).setPhysicsLocation(player.getLocalTranslation());
         }
         else if(down) {
-            if(cam.getScreenCoordinates(player.getLocalTranslation()).y - inputManager.getCursorPosition().y < 0) {
-                player.setLocalTranslation((float)(player.getLocalTranslation().x + (Math.sin(theta) * tpf * 2)), (float)player.getLocalTranslation().y, (float)(player.getLocalTranslation().z - (Math.cos(theta) * tpf * 2)));
-            }
-            else {
-                player.setLocalTranslation((float)(player.getLocalTranslation().x - (Math.sin(theta) * tpf * 2)), (float)player.getLocalTranslation().y, (float)(player.getLocalTranslation().z + (Math.cos(theta) * tpf * 2)));
-            }
+            player.setLocalTranslation((float)(player.getLocalTranslation().x + (Math.cos(theta) * tpf * 2)), (float)player.getLocalTranslation().y, (float)(player.getLocalTranslation().z - (Math.sin(theta) * tpf * 2)));
             player.getControl(RigidBodyControl.class).setPhysicsLocation(player.getLocalTranslation());
         }
-        /*if(right) {
-            player.setLocalTranslation((player.getLocalTranslation().x - tpf * 2), player.getLocalTranslation().y, player.getLocalTranslation().z);
-            player.getControl(RigidBodyControl.class).setPhysicsLocation(player.getLocalTranslation());
-        }
-        else if(left) {
-            player.setLocalTranslation((player.getLocalTranslation().x + tpf * 2), player.getLocalTranslation().y, player.getLocalTranslation().z);
-            player.getControl(RigidBodyControl.class).setPhysicsLocation(player.getLocalTranslation());
-        }*/
+        
         auxTheta = theta;
     }
     
@@ -303,7 +343,7 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         Geometry boxGeo;
         Material boxMat;
         
-        boxMesh = new Box(0.1f, 0.1f, 0.3f);
+        boxMesh = new Box(0.3f, 0.1f, 0.1f);
         boxGeo = new Geometry("Box", boxMesh);
         boxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         boxMat.setColor("Color", ColorRGBA.Yellow);
@@ -313,6 +353,11 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         
         shot.setLocalTranslation(player.getLocalTranslation());
         shot.setLocalRotation(player.getLocalRotation());
+        
+        RigidBodyControl boxPhysicsNode = new RigidBodyControl(0);
+        shot.addControl(boxPhysicsNode);
+        bulletAppState.getPhysicsSpace().add(boxPhysicsNode);
+        
         shots.add(shot);
         thetas.add(auxTheta);
         rootNode.attachChild(shot);
@@ -324,7 +369,8 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         for(Node currentShot : shots) {
             theta = thetas.get(i);
             i++;
-            currentShot.setLocalTranslation((float)(currentShot.getLocalTranslation().x + Math.sin(theta) * tpf / 10), currentShot.getLocalTranslation().y, (float)(currentShot.getLocalTranslation().z + Math.cos(theta) * tpf / 10));
+            currentShot.setLocalTranslation((float)(currentShot.getLocalTranslation().x - Math.cos(theta) * tpf * 5), currentShot.getLocalTranslation().y, (float)(currentShot.getLocalTranslation().z + Math.sin(theta) * tpf * 5));
+            currentShot.getControl(RigidBodyControl.class).setPhysicsLocation(currentShot.getLocalTranslation());
         }
     }
 }
