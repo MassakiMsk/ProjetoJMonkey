@@ -13,6 +13,7 @@ import com.jme3.input.controls.KeyTrigger;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Quaternion;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Geometry;
@@ -36,12 +37,14 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
     private final float closeHeight = 1;
     private final Quaternion quat = new Quaternion();
     private BulletAppState bulletAppState;
-    private Node farm, player, tuc, bus, shot;
-    private ArrayList<Node> tucs = new ArrayList<>();
-    private ArrayList<Node> shots = new ArrayList<>();
-    private ArrayList<Double> thetas = new ArrayList<>();
-    int aux = 0;
-    double auxTheta;
+    private Node farm, bus;
+    private Shot shot;
+    private Tuc tuc;
+    //private Player1 player;
+    private Player player;
+    private ArrayList<Tuc> tucs = new ArrayList<>();
+    private ArrayList<Shot> shots = new ArrayList<>();
+    private int aux = 0;
     
     
     public static void main(String[] args) {
@@ -66,14 +69,21 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         createBus();
         createTuc();
         bulletAppState.setDebugEnabled(true);
+        bulletAppState.getPhysicsSpace().addCollisionListener(this);
     }
 
     @Override
     public void simpleUpdate(float tpf) {
-        updateTuc(tpf);
-        updatePlayer(tpf);
-        updateShot(tpf);
- //       aux++;
+        player.update(tpf, inputManager.getCursorPosition(), cam.getScreenCoordinates(player.getLocalTranslation()), up, down);
+        for(Tuc currentTuc : tucs){
+            currentTuc.update(tpf, player);
+        }
+        
+        for(Shot currentShot : shots) {
+            currentShot.update(tpf);
+        }
+        
+        aux++;
         if(aux == 10000) {
             aux = 0;
             createTuc();
@@ -110,11 +120,34 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
     @Override
     public void collision(PhysicsCollisionEvent event) {
         if (event.getNodeA().getName().equals("tuc") || event.getNodeB().getName().equals("tuc")) {
+<<<<<<< HEAD
+            if(event.getNodeA().getName().equals("shot") || event.getNodeB().getName().equals("shot")) {
+                rootNode.detachChild(event.getNodeA());
+                bulletAppState.getPhysicsSpace().remove(event.getNodeA().getControl(RigidBodyControl.class));
+                tucs.remove(event.getNodeA());
+                
+                rootNode.detachChild(event.getNodeB());
+                bulletAppState.getPhysicsSpace().remove(event.getNodeB().getControl(RigidBodyControl.class));
+                tucs.remove(event.getNodeB());
+            }
+        }
+        else if(event.getNodeA().getName().equals("farm") || event.getNodeB().getName().equals("farm")) {
+            if(event.getNodeA().getName().equals("shot")) {
+                rootNode.detachChild(event.getNodeA());
+                bulletAppState.getPhysicsSpace().remove(event.getNodeA().getControl(RigidBodyControl.class));
+                tucs.remove(event.getNodeA());
+            }
+            else if(event.getNodeB().getName().equals("shot")) {
+                rootNode.detachChild(event.getNodeB());
+                bulletAppState.getPhysicsSpace().remove(event.getNodeB().getControl(RigidBodyControl.class));
+                tucs.remove(event.getNodeB());
+=======
             if(event.getNodeA().getName().equals("shot")) {
 
             }
             else if(event.getNodeB().getName().equals("shot")) {
                 
+>>>>>>> 4fb2922be18c9de1db77e459b3293338aea09654
             }
         }
     }
@@ -196,49 +229,23 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
     }
     
     public void createPlayer() {
-        player = new Node("player");
-        
-        Box boxMesh;
-        Geometry boxGeo;
-        Material boxMat;
-        
-        boxMesh = new Box(0.5f, 0.5f, 0.5f);
-        boxGeo = new Geometry("Box", boxMesh);
-        boxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        boxMat.setColor("Color", ColorRGBA.White);
-        boxGeo.setName("playerBody");
-        boxGeo.setMaterial(boxMat);
-        player.attachChild(boxGeo);
-        
-        player.setLocalTranslation(0, 0.5f, 0);
-        RigidBodyControl boxPhysicsNode = new RigidBodyControl(0);
-        player.addControl(boxPhysicsNode);
-        bulletAppState.getPhysicsSpace().add(boxPhysicsNode);
+        //player = new Player1("player", assetManager, bulletAppState, inputManager, cam);
+        player = new Player(bulletAppState, assetManager);
         rootNode.attachChild(player);
     }
     
     public void createBus() {
-        bus = new Node();
+        //bus = new Bus(bulletAppState, assetManager, new Vector3f(0, 1f, 8.5f));
+        bus = new Bus(bulletAppState, assetManager, new Vector3f(0, 1f, -8.5f));
         
-        Box boxMesh;
-        Geometry boxGeo;
-        Material boxMat;
-        
-        boxMesh = new Box(2, 1f, 0.75f);
-        boxGeo = new Geometry("Box", boxMesh);
-        boxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        boxMat.setColor("Color", ColorRGBA.Gray);
-        boxGeo.setName("bus");
-        boxGeo.setMaterial(boxMat);
-        bus.attachChild(boxGeo);
-        
-        bus.setLocalTranslation(0, 1f, 8.5f);
         rootNode.attachChild(bus);
     }
     
     public void createTuc() {
-        tuc = new Node("tuc");
+        tuc = new Tuc(bulletAppState, assetManager, bus);
         
+<<<<<<< HEAD
+=======
         Box boxMesh;
         Geometry boxGeo;
         Material boxMat;
@@ -257,10 +264,13 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         tuc.addControl(boxPhysicsNode);
         bulletAppState.getPhysicsSpace().add(boxPhysicsNode);
         
+>>>>>>> 4fb2922be18c9de1db77e459b3293338aea09654
         tucs.add(tuc);
         rootNode.attachChild(tuc);
     }
     
+<<<<<<< HEAD
+=======
     public void updateTuc(float tpf) {
         
         double tX, tZ, pX, pZ, auxauxTheta;
@@ -336,13 +346,12 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         auxTheta = theta;
     }
     
+>>>>>>> 4fb2922be18c9de1db77e459b3293338aea09654
     public void createShot() {
-        shot = new Node("shot");
+        shot = new Shot(bulletAppState, assetManager, player);
         
-        Box boxMesh;
-        Geometry boxGeo;
-        Material boxMat;
-        
+<<<<<<< HEAD
+=======
         boxMesh = new Box(0.3f, 0.1f, 0.1f);
         boxGeo = new Geometry("Box", boxMesh);
         boxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
@@ -358,11 +367,13 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         shot.addControl(boxPhysicsNode);
         bulletAppState.getPhysicsSpace().add(boxPhysicsNode);
         
+>>>>>>> 4fb2922be18c9de1db77e459b3293338aea09654
         shots.add(shot);
-        thetas.add(auxTheta);
         rootNode.attachChild(shot);
     }
     
+<<<<<<< HEAD
+=======
     public void updateShot(float tpf) {
         int i = 0;
         double theta;
@@ -373,4 +384,5 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
             currentShot.getControl(RigidBodyControl.class).setPhysicsLocation(currentShot.getLocalTranslation());
         }
     }
+>>>>>>> 4fb2922be18c9de1db77e459b3293338aea09654
 }
