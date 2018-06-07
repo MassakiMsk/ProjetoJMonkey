@@ -106,17 +106,12 @@ public class Player1 extends Node{
                 theta = (1.5078 * 4) - theta;
             }
         }
-        
-        dir = new Vector3f((float)(-(Math.cos(theta))), 0, (float)((Math.sin(theta))));
+        dir = new Vector3f(0, 0, 0);
+        if(up)
+            dir = new Vector3f((float)(-(Math.cos(theta)) * 4), 0, (float)((Math.sin(theta))) * 4);
         
         physicsCharacter.setWalkDirection(dir);
         physicsCharacter.setViewDirection(dir);
-        
-
-
-        
-        
-        
         
     }
 }

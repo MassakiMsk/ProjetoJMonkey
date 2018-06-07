@@ -6,6 +6,8 @@
 package mygame;
 
 import com.jme3.asset.AssetManager;
+import com.jme3.audio.AudioData.DataType;
+import com.jme3.audio.AudioNode;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.material.Material;
@@ -20,9 +22,10 @@ import com.jme3.scene.shape.Box;
  */
 public class Shot extends Node{
     public double theta;
+    private AudioNode audio_gun;
     
-    //public Shot(BulletAppState bulletAppState, AssetManager assetManager, Player1 player) {
-    public Shot(BulletAppState bulletAppState, AssetManager assetManager, Player player) {
+    public Shot(BulletAppState bulletAppState, AssetManager assetManager, Player1 player) {
+    //public Shot(BulletAppState bulletAppState, AssetManager assetManager, Player player) {
         Box boxMesh;
         Geometry boxGeo;
         Material boxMat;
@@ -36,6 +39,7 @@ public class Shot extends Node{
         attachChild(boxGeo);
         
         setLocalTranslation(player.getLocalTranslation());
+        setLocalTranslation(getLocalTranslation().x, 1, getLocalTranslation().z);
         setLocalRotation(player.getLocalRotation());
         
         RigidBodyControl boxPhysicsNode = new RigidBodyControl(1);
@@ -43,10 +47,20 @@ public class Shot extends Node{
         bulletAppState.getPhysicsSpace().add(boxPhysicsNode);
         
         theta = player.theta;
+        initAudio(assetManager);
+        audio_gun.playInstance();
     }
     
     public void update(float tpf) {
-        setLocalTranslation((float)(getLocalTranslation().x - Math.cos(theta) * tpf * 5), getLocalTranslation().y, (float)(getLocalTranslation().z + Math.sin(theta) * tpf * 5));
+        setLocalTranslation((float)(getLocalTranslation().x - Math.cos(theta) * tpf * 10), getLocalTranslation().y, (float)(getLocalTranslation().z + Math.sin(theta) * tpf * 10));
         getControl(RigidBodyControl.class).setPhysicsLocation(getLocalTranslation());
+    }
+    
+    public void initAudio(AssetManager assetManager) {
+        audio_gun = new AudioNode(assetManager, "sounds/gun.wav", DataType.Buffer);
+        audio_gun.setPositional(false);
+        audio_gun.setLooping(false);
+        audio_gun.setVolume(2);
+        attachChild(audio_gun);
     }
 }

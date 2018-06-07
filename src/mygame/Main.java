@@ -40,8 +40,8 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
     private Node farm, bus;
     private Shot shot;
     private Tuc tuc;
-    //private Player1 player;
-    private Player player;
+    private Player1 player;
+    //private Player player;
     private ArrayList<Tuc> tucs = new ArrayList<>();
     private ArrayList<Shot> shots = new ArrayList<>();
     private int aux = 0;
@@ -221,8 +221,8 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
     }
     
     public void createPlayer() {
-        //player = new Player1("player", assetManager, bulletAppState, inputManager, cam);
-        player = new Player(bulletAppState, assetManager);
+        player = new Player1("player", assetManager, bulletAppState, inputManager, cam);
+        //player = new Player(bulletAppState, assetManager);
         rootNode.attachChild(player);
     }
     
