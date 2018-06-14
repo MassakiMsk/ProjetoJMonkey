@@ -19,6 +19,8 @@ import com.jme3.scene.shape.Box;
  * @author 1545 IRON V4
  */
 public class Bus extends Node{
+    public int lifes = 50;
+    
     public Bus(BulletAppState bulletAppState, AssetManager assetManager, Vector3f pos) {
         Box boxMesh;
         Geometry boxGeo;

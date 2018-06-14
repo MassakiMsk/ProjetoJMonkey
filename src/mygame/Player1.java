@@ -34,7 +34,11 @@ public class Player1 extends Node{
     private final BetterCharacterControl physicsCharacter;
     private Vector3f walkDirection = new Vector3f(0, 0, 0);
     private Vector3f viewDirection = new Vector3f(0, 0, 0);
+    private Vector3f dir = new Vector3f(0, 0, 0);
+    private final AnimControl animationControl;
+    private final AnimChannel animationChannel;
     public double theta = 0;
+    float airTime;
     
     public Player1(String player, AssetManager assetManager, BulletAppState bulletAppState, InputManager inputManager, Camera cam)
     {
@@ -45,25 +49,49 @@ public class Player1 extends Node{
         Material boxMat;
         
         setName("player");
-        boxMesh = new Box(0.5f, 0.5f, 0.5f);
+        /*boxMesh = new Box(0.5f, 0.5f, 0.5f);
         boxGeo = new Geometry("Box", boxMesh);
         boxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         boxMat.setColor("Color", ColorRGBA.White);
         boxGeo.setMaterial(boxMat);
         attachChild(boxGeo);
+        */
+        
+        Node oto = (Node) assetManager.loadModel("Models/Oto/Oto.mesh.xml");
+        oto.setLocalTranslation(0, 4.5f, 0);
+        attachChild(oto);
+
         
         setLocalTranslation(0, 0.5f, 0);   
+        setLocalScale(0.3f);
+        physicsCharacter = new BetterCharacterControl(1, 2.5f, 16f);
         
-        physicsCharacter = new BetterCharacterControl(0.5f, 0.5f, 0.5f);
         addControl(physicsCharacter);
         
         bulletAppState.getPhysicsSpace().add(physicsCharacter);
+        
+        
+        animationControl = oto.getControl(AnimControl.class);
+        animationChannel = animationControl.createChannel();
         
 
    }
 
    
-
+    void upDateAnimationPlayer() {
+        if(dir.x == 0 && dir.z == 0) {
+            if(!"stand".equals(animationChannel.getAnimationName()))
+                animationChannel.setAnim("stand", 1f);
+        }
+        else {
+            if(airTime > .3f) {
+                if(!"stand".equals(animationChannel.getAnimationName()))
+                    animationChannel.setAnim("stand");
+            }
+            else if(!"Walk".equals(animationChannel.getAnimationName()))
+                animationChannel.setAnim("Walk", 0.7f);
+        }
+    }
     
     public Vector3f getWalkDirection() {
         return walkDirection;
@@ -81,10 +109,10 @@ public class Player1 extends Node{
         this.viewDirection = viewDirection;
     }
     
-    void update(float tpf, Vector2f mouse, Vector3f cam, boolean up, boolean down)
+    void update(float tpf, Vector2f mouse, Vector3f cam, boolean up, boolean down, boolean left, boolean right)
     {    
         double cX, cY, pX, pY;
-        Vector3f dir;
+        Vector3f viewDir;
         
         cX = mouse.x;
         cY = mouse.y;
@@ -107,11 +135,21 @@ public class Player1 extends Node{
             }
         }
         dir = new Vector3f(0, 0, 0);
+        viewDir = new Vector3f((float)(-(Math.cos(theta))), 0, (float)((Math.sin(theta))));
         if(up)
-            dir = new Vector3f((float)(-(Math.cos(theta)) * 4), 0, (float)((Math.sin(theta))) * 4);
+            dir = new Vector3f((float)(-(Math.cos(theta)) * 3), 0, (float)((Math.sin(theta))) * 3);
+            //dir.z = 3;
+        else if(down)
+            dir = new Vector3f((float)((Math.cos(theta)) * 3), 0, (float)(-(Math.sin(theta))) * 3);
+            //dir.z = -3;
+        if(left)
+            dir.x = 3;
+        else if(right)
+            dir.x = -3;
         
         physicsCharacter.setWalkDirection(dir);
-        physicsCharacter.setViewDirection(dir);
+        physicsCharacter.setViewDirection(viewDir);
         
+        upDateAnimationPlayer();
     }
 }

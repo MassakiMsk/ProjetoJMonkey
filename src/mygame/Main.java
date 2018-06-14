@@ -7,9 +7,11 @@ import com.jme3.bullet.collision.PhysicsCollisionEvent;
 import com.jme3.bullet.collision.PhysicsCollisionListener;
 import com.jme3.bullet.control.BetterCharacterControl;
 import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.font.BitmapText;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Quaternion;
@@ -30,26 +32,30 @@ import java.util.ArrayList;
  */
 public class Main extends SimpleApplication implements ActionListener, PhysicsCollisionListener{
 
-    private boolean up = false, down = false, space = false, pressed = false;
+    private boolean up = false, down = false, left = false, right = false, space = false, pressed = false;
     private final float farmSize = 10;
     private final float farmHeight = 1;
     private final float close = 0.1f;
     private final float closeHeight = 1;
     private final Quaternion quat = new Quaternion();
     private BulletAppState bulletAppState;
-    private Node farm, bus;
+    private Node farm;
     private Shot shot;
     private Tuc tuc;
     private Player1 player;
     //private Player player;
     private ArrayList<Tuc> tucs = new ArrayList<>();
     private ArrayList<Shot> shots = new ArrayList<>();
+    private ArrayList<Bus> buses = new ArrayList<>();
     private int aux = 0;
-    
+    private int pontos = 0;
+    private int qntTucs = 0;
+    long tempo = System.currentTimeMillis();
+    long tempoBus = System.currentTimeMillis();
     
     public static void main(String[] args) {
         Main app = new Main();
-        app.showSettings = false;
+        //app.showSettings = false;
         app.start();
     }
 
@@ -59,22 +65,27 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
         stateManager.attach(bulletAppState);
         
         flyCam.setEnabled(paused);
-        cam.setLocation(new Vector3f(0, 40, 0));
-        quat.fromAngleAxis((float)(Math.PI / 2), new Vector3f(1, 0, 0));
+        cam.setLocation(new Vector3f(0, 35, -15));
+        quat.fromAngleAxis((float)((Math.PI / 2) * 0.8f), new Vector3f(1, 0, 0));
         cam.setRotation(quat);
         
         initKeys();
         createFarm();
         createPlayer();
         createBus();
-        createTuc();
-        bulletAppState.setDebugEnabled(true);
+        //bulletAppState.setDebugEnabled(true);
         bulletAppState.getPhysicsSpace().addCollisionListener(this);
+        
+        DirectionalLight sun = new DirectionalLight();
+        sun.setDirection((new Vector3f(-0.5f, -0.5f, -0.5f)).normalizeLocal());
+        sun.setColor(ColorRGBA.White);
+        rootNode.addLight(sun);
+        
     }
 
     @Override
     public void simpleUpdate(float tpf) {
-        player.update(tpf, inputManager.getCursorPosition(), cam.getScreenCoordinates(player.getLocalTranslation()), up, down);
+        player.update(tpf, inputManager.getCursorPosition(), cam.getScreenCoordinates(player.getLocalTranslation()), up, down, left, right);
         for(Tuc currentTuc : tucs){
             currentTuc.update(tpf, player);
         }
@@ -83,14 +94,47 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
             currentShot.update(tpf);
         }
         
-        aux++;
-        if(aux == 10000) {
-            aux = 0;
-            createTuc();
+        if(tempo + 3000 < System.currentTimeMillis()) {
+            tempo = System.currentTimeMillis();
+            for(Bus bus: buses) {
+                createTuc(bus);
+            }
         }
+        
+        if(tempoBus + 10000 < System.currentTimeMillis()) {
+            tempoBus = System.currentTimeMillis();
+            createBus();
+        }
+        
+        guiNode.detachAllChildren();
+        
+        if(tucs.size() > 10) {
+            rootNode.detachAllChildren();
+            
+            BitmapText textoFinal = new BitmapText(guiFont, false);                
+            textoFinal.setSize(guiFont.getCharSet().getRenderedSize());
+            textoFinal.setText("Pontuacao Final: " + (qntTucs - tucs.size()));
+            textoFinal.setLocalTranslation(200, textoFinal.getLineHeight() + 250, 0);                     
+            guiNode.attachChild(textoFinal);
+        }
+        else {
+            BitmapText helloText = new BitmapText(guiFont, false);
+            helloText.setSize(guiFont.getCharSet().getRenderedSize());
+            helloText.setText("Sem Terras: " + tucs.size() + "         Pontuacao: " + (qntTucs - tucs.size()));
+            helloText.setLocalTranslation(400, helloText.getLineHeight(), 0);
+            guiNode.attachChild(helloText);
+            BitmapText helloText1 = new BitmapText(guiFont, false);
+            helloText1.setSize(guiFont.getCharSet().getRenderedSize());
+            helloText1.setText("    Com 10 sem terras você perde sua fazenda!");
+            helloText1.setLocalTranslation(0, helloText.getLineHeight(), 0);
+            guiNode.attachChild(helloText1);
+        }
+        
     }
 
     @Override
+            
+        
     public void simpleRender(RenderManager rm) {
     }
 
@@ -115,6 +159,24 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
                 }
                 break;
         }
+        switch(name) {
+            case "CharLeft":
+                if(isPressed) {
+                    left = true;
+                }
+                else {
+                    left = false;
+                }
+                break;
+            case "CharRight":
+                if(isPressed) {
+                    right = true;
+                }
+                else {
+                    right = false;
+                }
+                break;
+        }
     }
 
     @Override
@@ -130,6 +192,7 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
                 tucs.remove(event.getNodeB());
             }
         }
+
         else if(event.getNodeA().getName().equals("farm") || event.getNodeB().getName().equals("farm")) {
             if(event.getNodeA().getName().equals("shot")) {
                 rootNode.detachChild(event.getNodeA());
@@ -142,15 +205,33 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
                 tucs.remove(event.getNodeB());
             }
         }
+        
+        else if(event.getNodeA().getName().equals("player") || event.getNodeB().getName().equals("player")) {
+            if(event.getNodeA().getName().equals("tuc")) {
+                rootNode.detachChild(event.getNodeA());
+                bulletAppState.getPhysicsSpace().remove(event.getNodeA().getControl(RigidBodyControl.class));
+                tucs.remove(event.getNodeA());
+            }
+            if(event.getNodeB().getName().equals("tuc")) {
+                rootNode.detachChild(event.getNodeB());
+                bulletAppState.getPhysicsSpace().remove(event.getNodeB().getControl(RigidBodyControl.class));
+                tucs.remove(event.getNodeB());
+            }
+        }
     }
     
     private void initKeys() {
-        inputManager.addMapping("CharForward", new KeyTrigger(KeyInput.KEY_T));
-        inputManager.addMapping("CharBackward", new KeyTrigger(KeyInput.KEY_G));
+        inputManager.addMapping("CharForward", new KeyTrigger(KeyInput.KEY_W));
+        inputManager.addMapping("CharBackward", new KeyTrigger(KeyInput.KEY_S));
+        inputManager.addMapping("CharLeft", new KeyTrigger(KeyInput.KEY_A));
+        inputManager.addMapping("CharRight", new KeyTrigger(KeyInput.KEY_D));
+        
+        
         inputManager.addMapping("CharSpace", new KeyTrigger(KeyInput.KEY_SPACE));
 
         inputManager.addListener(actionListener, "CharSpace");
         inputManager.addListener(this, "CharForward", "CharBackward");
+        inputManager.addListener(this, "CharLeft", "CharRight");
     }
     
     ActionListener actionListener = new ActionListener(){
@@ -227,17 +308,32 @@ public class Main extends SimpleApplication implements ActionListener, PhysicsCo
     }
     
     public void createBus() {
-        //bus = new Bus(bulletAppState, assetManager, new Vector3f(0, 1f, 8.5f));
-        bus = new Bus(bulletAppState, assetManager, new Vector3f(0, 1f, -8.5f));
+        Bus bus = null;
         
-        rootNode.attachChild(bus);
+        if(buses.size() == 0) {
+            bus = new Bus(bulletAppState, assetManager, new Vector3f(0, 1f, 8.5f));
+        }
+        else if(buses.size() == 1) {
+            bus = new Bus(bulletAppState, assetManager, new Vector3f(0, 1f, 8.5f));
+        }
+        else if(buses.size() == 2) {
+            bus = new Bus(bulletAppState, assetManager, new Vector3f(7, 1f, 0));
+        }
+        else if(buses.size() == 3) {
+            bus = new Bus(bulletAppState, assetManager, new Vector3f(-7, 1f, 0));
+        }
+        if(bus != null) {
+            buses.add(bus);
+            rootNode.attachChild(bus);
+        }
     }
     
-    public void createTuc() {
+    public void createTuc(Bus bus) {
         tuc = new Tuc(bulletAppState, assetManager, bus);
         
         tucs.add(tuc);
         rootNode.attachChild(tuc);
+        qntTucs++;
     }
     
     public void createShot() {

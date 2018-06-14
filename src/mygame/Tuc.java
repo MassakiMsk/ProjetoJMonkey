@@ -14,6 +14,7 @@ import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 
 /**
@@ -21,18 +22,28 @@ import com.jme3.scene.shape.Box;
  * @author 1545 IRON V4
  */
 public class Tuc extends Node{
+    static Spatial duck = null;
+    
     public Tuc(BulletAppState bulletAppState, AssetManager assetManager, Node bus) {   
-        Box boxMesh;
-        Geometry boxGeo;
-        Material boxMat;
+        
+        if(duck == null) {
+            duck = assetManager.loadModel("Models/Duck.gltf");
+        }
+        
+        //Box boxMesh;
+        //Geometry boxGeo;
+        //Material boxMat;
         
         setName("tuc");
-        boxMesh = new Box(0.5f, 0.5f, 0.5f);
-        boxGeo = new Geometry("Box", boxMesh);
-        boxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        boxMat.setColor("Color", ColorRGBA.Red);
-        boxGeo.setMaterial(boxMat);
-        attachChild(boxGeo);
+        //boxMesh = new Box(0.5f, 0.5f, 0.5f);
+        //boxGeo = new Geometry("Box", boxMesh);
+        //boxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        //boxMat.setColor("Color", ColorRGBA.Red);
+        //boxGeo.setMaterial(boxMat);
+        Node aux = (Node) duck.clone();
+        attachChild(aux);
+        setLocalScale(1);
+        //attachChild(boxGeo);
         
         setLocalTranslation(bus.getLocalTranslation());
         
@@ -64,7 +75,7 @@ public class Tuc extends Node{
                 theta = (1.5078 * 4) - theta;
             }
         }
-        quat.fromAngleAxis((float)theta, new Vector3f(0, -1, 0));
+        quat.fromAngleAxis((float)(theta + Math.PI), new Vector3f(0, -1, 0));
         setLocalRotation(quat);
         setLocalTranslation((float)(getLocalTranslation().x - (Math.cos(theta) * tpf)), (float)getLocalTranslation().y, (float)(getLocalTranslation().z - (Math.sin(theta) * tpf)));
         getControl(RigidBodyControl.class).setPhysicsLocation(getLocalTranslation());

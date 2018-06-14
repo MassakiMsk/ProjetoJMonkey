@@ -57,7 +57,7 @@ public class Shot extends Node{
     }
     
     public void initAudio(AssetManager assetManager) {
-        audio_gun = new AudioNode(assetManager, "sounds/gun.wav", DataType.Buffer);
+        audio_gun = new AudioNode(assetManager, "Sounds/gun.wav", DataType.Buffer);
         audio_gun.setPositional(false);
         audio_gun.setLooping(false);
         audio_gun.setVolume(2);
